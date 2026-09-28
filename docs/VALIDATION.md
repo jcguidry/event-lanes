@@ -16,3 +16,9 @@ Verified in this workspace on 2026-09-28: TypeScript compilation, standalone bun
 Canvas2D with interval indexing and visible-row drawing, not WebGL. No streaming patches, worker pipeline, backend pagination, automatic relationship discovery, undo/redo, advanced label collision layout, hierarchical event aggregation, PDF/SVG export, or automatic optimization. Overlapping intervals share a lane center and may obscure each other. Dense trace overlays are capped at 600 events. Relationship curves do not currently carry arrowheads; direction is explicit in the data and inspector. Touch supports native scrolling; touch event selection and pinch gestures are not implemented. PNG is viewport-only. Text alternative is capped at 200 records. No full accessibility conformance audit has been performed.
 
 A real operational deployment needs representative volume profiling, API versioning policy, integration/security review, and domain-specific validation in its own application. This library renders supplied relationships; it does not establish the truth of a causal claim or compute operational impact metrics.
+
+## Follow-up review — September 28, 2026
+
+Both initial GitHub Actions workflows completed successfully on clean runners. Source review found and fixed hit targets leaking into the fixed axis/label regions, scroll-dependent double-click coordinates, and retained handlers from repeatedly rebuilding the accessible list. Relationship curves now respect the active event filters. The separate demo preserves filters while restoring a saved view and can build a self-contained offline HTML review copy.
+
+The follow-up browser attempt also rejected `file:` navigation under its URL policy. These changes have compiler/model/build validation, **not** interactive acceptance evidence. The checklist above remains required.

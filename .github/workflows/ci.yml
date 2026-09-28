@@ -12,3 +12,9 @@ jobs:
       - run: npm test
       - run: python3 -m unittest discover -s test -p 'test_python.py'
       - run: npm pack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: event-lanes-package
+          path: '*.tgz'
+          if-no-files-found: error
+          retention-days: 30
