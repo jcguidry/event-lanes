@@ -1,0 +1,229 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Event Lanes dataset v1",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "lanes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/lane"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    },
+    "laneGroups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/laneGroup"
+      }
+    },
+    "eventGroups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/eventGroup"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/relationship"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "lanes",
+    "events"
+  ],
+  "$defs": {
+    "lane": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "groupId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {}
+      },
+      "required": [
+        "id",
+        "label"
+      ]
+    },
+    "laneGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ]
+    },
+    "eventGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "metadata": {}
+      },
+      "required": [
+        "id",
+        "label"
+      ]
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "time": {
+          "type": "integer",
+          "minimum": -8640000000000000,
+          "maximum": 8640000000000000
+        },
+        "endTime": {
+          "type": "integer",
+          "minimum": -8640000000000000,
+          "maximum": 8640000000000000
+        },
+        "laneIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "groupIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "transfers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/transfer"
+          }
+        },
+        "kind": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "metadata": {}
+      },
+      "required": [
+        "id",
+        "label",
+        "time",
+        "laneIds"
+      ]
+    },
+    "transfer": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "itemId": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ]
+    },
+    "relationship": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "causes",
+            "enables",
+            "correlates",
+            "supersedes"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "metadata": {}
+      },
+      "required": [
+        "id",
+        "source",
+        "target",
+        "kind"
+      ]
+    }
+  }
+}
