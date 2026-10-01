@@ -1,5 +1,5 @@
 export * from './types.js';
-import type { TimelineData, TemporalEvent, TimelineFilter, TraceOptions, TraceResult, Relationship, RelationKind, TimeRange } from './types.js';
+import type { TimelineData, TemporalEvent, TimelineFilter, TraceOptions, TraceResult, Relationship, RelationKind, TimeRange, ViewState } from './types.js';
 
 export class DataValidationError extends Error {
   constructor(public readonly issues: string[]) { super(`Invalid timeline data:\n${issues.join('\n')}`); this.name = 'DataValidationError'; }
@@ -68,6 +68,7 @@ export function validateData(input: unknown): TimelineData {
     if (typeof v === 'number' && Number.isFinite(v)) return;
     if (typeof v !== 'object' || !v || (Object.getPrototypeOf(v) !== Object.prototype && !Array.isArray(v) && Object.getPrototypeOf(v) !== null)) { issues.push(`${path} must contain JSON values only`); return; }
     if (active.has(v)) { issues.push(`${path} is cyclic`); return; }
+    if(Array.isArray(v)){for(let i=0;i<v.length;i++)if(!(i in v)){issues.push(`${path}[${i}] must not be a sparse array entry`);return;}}
     active.add(v); for (const [k,x] of Object.entries(v)) jsonValue(x,`${path}.${k}`);active.delete(v);
   }
   jsonValue(input,'data');
@@ -84,12 +85,16 @@ function tree(items: TemporalEvent[], start=0, end=items.length): Node | undefin
   if(left){node.left=left;node.maxEnd=Math.max(node.maxEnd,left.maxEnd);}if(right){node.right=right;node.maxEnd=Math.max(node.maxEnd,right.maxEnd);}return node;
 }
 export function normalizeRange(range: TimeRange, minimumSpan=1): TimeRange {
-  if (!Number.isFinite(range.start) || !Number.isFinite(range.end) || range.end<=range.start) throw new RangeError('Viewport end must be greater than start');
-  const span=Math.max(minimumSpan,Math.min(range.end-range.start,1.728e16)),center=Math.max(-8.64e15+span/2,Math.min(8.64e15-span/2,(range.start+range.end)/2));
-  return {start:center-span/2,end:center+span/2};
+  if (!range || !Number.isFinite(range.start) || !Number.isFinite(range.end) || range.end<=range.start) throw new RangeError('Viewport end must be greater than start');
+  if (!Number.isFinite(minimumSpan) || minimumSpan<1 || minimumSpan>1.728e16) throw new RangeError('minimumSpan must be between 1 and the Date range');
+  const span=Math.max(minimumSpan,Math.min(range.end-range.start,1.728e16));
+  const center=range.start/2+range.end/2;
+  const start=Math.max(-8.64e15,Math.min(8.64e15-span,center-span/2));
+  return {start,end:start+span};
 }
 export function zoomRange(range: TimeRange, factor: number, fraction=.5): TimeRange {
   if (!Number.isFinite(factor) || factor<=0) throw new RangeError('Zoom factor must be positive');
+  if(!Number.isFinite(fraction))throw new RangeError('Zoom anchor must be finite');
   fraction=Math.max(0,Math.min(1,fraction));const old=normalizeRange(range),span=Math.max(1,Math.min(1.728e16,(old.end-old.start)*factor)),anchor=old.start+(old.end-old.start)*fraction;
   return normalizeRange({start:anchor-span*fraction,end:anchor+span*(1-fraction)});
 }
@@ -129,16 +134,16 @@ export class TimelineModel {
     const pad=Math.max(1000,(end-start)*.08);return normalizeRange({start:start-pad,end:end+pad});
   }
   trace(ids: Iterable<string>,options: TraceOptions={}): TraceResult {
-    const roots=[...new Set([...ids].filter(id=>this.events.has(id)))],rootSet=new Set(roots),kinds=new Set(options.kinds??['causes','enables']),relationships=new Set<string>();
-    const maxDepth=options.maxDepth??Infinity;
-    if(maxDepth<0||Number.isNaN(maxDepth))throw new RangeError('maxDepth must be nonnegative');
+    const checked=validateTraceOptions(options);
+    const roots=[...new Set([...ids].filter(id=>this.events.has(id)))],rootSet=new Set(roots),kinds=new Set(checked.kinds),relationships=new Set<string>();
+    const maxDepth=checked.maxDepth;
     const walk=(direction:'upstream'|'downstream')=>{
       const found=new Set<string>(),seen=new Set(roots),queue=roots.map(id=>({id,depth:0}));
       for(let i=0;i<queue.length;i++){const current=queue[i]!;if(current.depth>=maxDepth)continue;
         for(const r of (direction==='upstream'?this.incoming:this.outgoing).get(current.id)??[]){if(!kinds.has(r.kind))continue;relationships.add(r.id);const next=direction==='upstream'?r.source:r.target;if(!rootSet.has(next))found.add(next);if(!seen.has(next)){seen.add(next);queue.push({id:next,depth:current.depth+1});}}
       }return [...found];
     };
-    const direction=options.direction??'both';return {roots,upstream:direction==='downstream'?[]:walk('upstream'),downstream:direction==='upstream'?[]:walk('downstream'),relationshipIds:[...relationships]};
+    const direction=checked.direction;return {roots,upstream:direction==='downstream'?[]:walk('upstream'),downstream:direction==='upstream'?[]:walk('downstream'),relationshipIds:[...relationships]};
   }
 }
 export interface DensityCell { laneId: string; bucket: number; start: number; end: number; eventIds: string[] }
@@ -150,4 +155,28 @@ export function aggregateEvents(events: TemporalEvent[],range: TimeRange,buckets
     const a=Math.max(0,Math.min(buckets-1,Math.floor((e.time-range.start)/width))),b=Math.max(a,Math.min(buckets-1,Math.floor(((e.endTime??e.time)-range.start)/width)));
     for(const laneId of e.laneIds)for(let bucket=a;bucket<=b;bucket++){const key=JSON.stringify([laneId,bucket]);let cell=cells.get(key);if(!cell){cell={laneId,bucket,start:range.start+bucket*width,end:range.start+(bucket+1)*width,eventIds:[]};cells.set(key,cell);}cell.eventIds.push(e.id);}
   }return [...cells.values()];
+}
+
+/** Validate options from plain JavaScript as strictly as TypeScript callers. */
+export function validateTraceOptions(value: TraceOptions={}): Required<TraceOptions> {
+  if(!isObject(value))throw new TypeError('Trace options must be an object');
+  const direction=value.direction??'both',kinds=value.kinds??['causes','enables'],maxDepth=value.maxDepth??Infinity;
+  if(typeof direction!=='string'||!['upstream','downstream','both'].includes(direction))throw new TypeError('Invalid trace direction');
+  if(!Array.isArray(kinds)||!kinds.every(kind=>relationKinds.includes(kind)))throw new TypeError('Invalid relationship kind');
+  if(typeof maxDepth!=='number'||(maxDepth!==Infinity&&(!Number.isInteger(maxDepth)||maxDepth<0)))throw new RangeError('maxDepth must be a nonnegative integer or Infinity');
+  return {direction:direction as Required<TraceOptions>['direction'],kinds:[...kinds],maxDepth};
+}
+export function validateFilter(value: unknown): TimelineFilter {
+  if(!isObject(value))throw new TypeError('Filter must be an object');
+  const result: TimelineFilter={};
+  for(const key of ['laneIds','groupIds','kinds'] as const){const list=value[key];if(list!==undefined){if(!Array.isArray(list)||!list.every(id=>typeof id==='string')||Object.keys(list).length!==list.length)throw new TypeError('Filter lists must contain strings');result[key]=[...list];}}
+  if(value.query!==undefined){if(typeof value.query!=='string')throw new TypeError('Filter query must be a string');result.query=value.query;}
+  return result;
+}
+/** Fully validate before a renderer mutates its current state. */
+export function validateViewState(value: unknown): ViewState {
+  if(!isObject(value)||value.schemaVersion!==1)throw new TypeError('Unsupported or invalid view state');
+  const ids=(key:string):string[]=>{const list=value[key];if(!Array.isArray(list)||!list.every(str)||Object.keys(list).length!==list.length)throw new TypeError(`Invalid ${key}`);return [...new Set(list)];};
+  if(!isObject(value.viewport))throw new TypeError('Invalid viewport');
+  return {schemaVersion:1,viewport:normalizeRange(value.viewport as unknown as TimeRange),filter:validateFilter(value.filter),selectedEventIds:ids('selectedEventIds'),collapsedLaneGroupIds:ids('collapsedLaneGroupIds')};
 }

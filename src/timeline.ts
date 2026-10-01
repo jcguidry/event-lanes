@@ -1,4 +1,4 @@
-import { TimelineModel, aggregateEvents, normalizeRange, zoomRange } from './core.js';
+import { TimelineModel, aggregateEvents, normalizeRange, zoomRange, validateTraceOptions, validateFilter, validateViewState } from './core.js';
 import type { TimelineData, TimelineOptions, TimelineEvents, TemporalEvent, TimeRange, TimelineFilter, TraceResult, ViewState } from './types.js';
 
 const EMPTY: TimelineData={schemaVersion:1,lanes:[],events:[]};
@@ -28,11 +28,13 @@ export class EventTimeline {
     if(!container || typeof container.appendChild!=='function')throw new TypeError('A container HTMLElement is required');
     this.options={height:420,rowHeight:64,labelWidth:170,timeZone:'UTC',selectionMode:'event',densityThreshold:600,showRelationships:true,ariaLabel:'Interactive event timeline',...options};
     for(const key of ['height','rowHeight','labelWidth','densityThreshold'] as const)if(!Number.isFinite(this.options[key])||this.options[key]<=0)throw new RangeError(`${key} must be positive`);
+    if(!['event','group'].includes(this.options.selectionMode))throw new TypeError('Invalid selection mode');
+    this.options.trace=validateTraceOptions(options.trace);
     this.options.height=Math.max(180,this.options.height);this.options.rowHeight=Math.max(36,this.options.rowHeight);
     this.formatter=new Intl.DateTimeFormat('en-GB',{timeZone:this.options.timeZone,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
     this.dateFormatter=new Intl.DateTimeFormat('en-GB',{timeZone:this.options.timeZone,day:'2-digit',month:'short',year:'numeric'});
     this.host=document.createElement('div');this.shadow=this.host.attachShadow({mode:'open'});
-    this.shadow.innerHTML=`<style>${CSS}</style><div class="bar"><button data-action="in" aria-label="Zoom in">＋</button><button data-action="out" aria-label="Zoom out">−</button><button data-action="fit">Fit all</button><button data-action="selection">Fit selection</button><button data-action="clear">Clear selection</button><span class="zone"></span></div><div class="stage"><div class="scroll" tabindex="0" role="region"><div class="spacer"></div></div><canvas aria-hidden="true"></canvas><div class="tip" hidden></div></div><div class="status"></div><details class="access"><summary>Accessible event list</summary><div class="access-list"></div></details><div class="sr" aria-live="polite" aria-atomic="true"></div>`;
+    this.shadow.innerHTML=`<style>${CSS}</style><div class="bar"><button type="button" data-action="in" aria-label="Zoom in">＋</button><button type="button" data-action="out" aria-label="Zoom out">−</button><button type="button" data-action="fit">Fit all</button><button type="button" data-action="selection">Fit selection</button><button type="button" data-action="clear">Clear selection</button><span class="zone"></span></div><div class="stage"><div class="scroll" tabindex="0" role="region"><div class="spacer"></div></div><canvas aria-hidden="true"></canvas><div class="tip" hidden></div></div><div class="status"></div><details class="access"><summary>Accessible event list</summary><div class="access-list"></div></details><div class="sr" aria-live="polite" aria-atomic="true"></div>`;
     this.stage=this.shadow.querySelector('.stage')!;this.scroll=this.shadow.querySelector('.scroll')!;this.canvas=this.shadow.querySelector('canvas')!;this.spacer=this.shadow.querySelector('.spacer')!;this.tip=this.shadow.querySelector('.tip')!;this.status=this.shadow.querySelector('.status')!;this.list=this.shadow.querySelector('.access-list')!;this.live=this.shadow.querySelector('.sr')!;
     const context=this.canvas.getContext('2d');if(!context)throw new Error('Canvas2D is unavailable');this.context=context;
     this.scroll.setAttribute('aria-label',`${this.options.ariaLabel}. Drag to pan time. Shift drag to select. Control wheel to zoom. Arrow up/down browses events; Enter selects; plus/minus zooms; F fits all; Escape clears.`);
@@ -73,10 +75,9 @@ export class EventTimeline {
   trace(ids: Iterable<string>=this.selected): TraceResult {return this.model.trace(ids,this.options.trace);}
   setFilter(filter: TimelineFilter): void {this.assertAlive();this.filter=validateFilter(filter);this.rebuildRows();this.updateAccessible();this.schedule();}
   getViewState(): ViewState {return {schemaVersion:1,viewport:this.getViewport(),selectedEventIds:this.getSelection(),filter:structuredClone(this.filter),collapsedLaneGroupIds:[...this.collapsed]};}
-  restoreViewState(state: ViewState): void {
-    this.assertAlive();if(state.schemaVersion!==1)throw new RangeError('Unsupported view-state version');const range=normalizeRange(state.viewport);
-    if(!Array.isArray(state.selectedEventIds)||!Array.isArray(state.collapsedLaneGroupIds)||!state.filter||typeof state.filter!=='object')throw new TypeError('Invalid view state');
-    const filter=validateFilter(state.filter);if(![...state.selectedEventIds,...state.collapsedLaneGroupIds].every(id=>typeof id==='string'))throw new TypeError('Invalid view-state IDs');this.viewport=range;this.filter=filter;this.collapsed=new Set(state.collapsedLaneGroupIds);this.selected=new Set(state.selectedEventIds.filter(id=>this.model.events.has(id)));this.refreshTrace();this.rebuildRows();this.updateAccessible();this.schedule();this.emitSelection('api');this.emit('viewport',{...range,source:'api'});
+  restoreViewState(value: unknown): void {
+    this.assertAlive();const state=validateViewState(value);
+    this.viewport=state.viewport;this.filter=state.filter;this.collapsed=new Set(state.collapsedLaneGroupIds);this.selected=new Set(state.selectedEventIds.filter(id=>this.model.events.has(id)));this.refreshTrace();this.rebuildRows();this.updateAccessible();this.schedule();this.emitSelection('api');this.emit('viewport',{...state.viewport,source:'api'});
   }
   on<K extends keyof TimelineEvents>(name: K,handler:(detail: TimelineEvents[K])=>void):()=>void {
     this.assertAlive();let list=this.handlers.get(name);if(!list){list=new Set();this.handlers.set(name,list);}list.add(handler as (detail:never)=>void);return ()=>list!.delete(handler as (detail:never)=>void);
@@ -164,4 +165,3 @@ export class EventTimeline {
 }
 export function createTimeline(container: HTMLElement,options?:TimelineOptions): EventTimeline {return new EventTimeline(container,options);}
 
-function validateFilter(value: TimelineFilter): TimelineFilter {if(!value||typeof value!=='object'||Array.isArray(value))throw new TypeError('Invalid filter');for(const key of ['laneIds','groupIds','kinds'] as const){if(value[key]!==undefined&&(!Array.isArray(value[key])||!value[key]!.every(v=>typeof v==='string')))throw new TypeError('Filter lists must contain strings');}if(value.query!==undefined&&typeof value.query!=='string')throw new TypeError('Filter query must be a string');return structuredClone(value);}

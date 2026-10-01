@@ -24,3 +24,22 @@ test('aggregate cells count a multi-party event once per lane and retain member 
 test('zoom preserves the pointer anchor and clamps extreme ranges',()=>{const range={start:100,end:1100},next=zoomRange(range,.5,.25);assert.equal(range.start+1000*.25,next.start+(next.end-next.start)*.25);assert.ok(zoomRange(range,1e-12).end-zoomRange(range,1e-12).start>=1);assert.throws(()=>zoomRange(range,0),RangeError);assert.throws(()=>normalizeRange({start:5,end:2}),RangeError);});
 test('interval index agrees with a brute-force oracle on seeded random intervals',()=>{let seed=91;const rand=()=>((seed=(seed*1664525+1013904223)>>>0)/2**32);const d={schemaVersion:1,lanes:[{id:'a',label:'A'}],events:Array.from({length:2000},(_,i)=>{const time=Math.floor(rand()*10000);return {id:String(i),label:String(i),time,endTime:time+Math.floor(rand()*1500),laneIds:['a']};})};const m=new TimelineModel(d);for(let i=0;i<80;i++){const start=Math.floor(rand()*10000),end=start+500;assert.deepEqual(new Set(m.query({start,end}).map(x=>x.id)),new Set(d.events.filter(e=>e.time<=end&&e.endTime>=start).map(x=>x.id)));}});
 test('core imports without a DOM',()=>{assert.equal(typeof globalThis.document,'undefined');assert.equal(new TimelineModel({schemaVersion:1,lanes:[],events:[]}).bounds().end,3600000);});
+
+test('sparse arrays fail at the JSON boundary instead of crashing model construction',()=>{
+ for(const target of ['events','metadata']){const d=fixture();if(target==='events')d.events.length+=1;else d.events[0].metadata=Array(2);assert.throws(()=>new TimelineModel(d),DataValidationError);}
+});
+test('one millisecond viewports remain nonempty at both Date limits',()=>{
+ for(const start of [-8640000000000000,8639999999999999]){const r=normalizeRange({start,end:start+1});assert.ok(r.end>r.start);assert.ok(r.start>=-8640000000000000&&r.end<=8640000000000000);}
+ for(const anchor of [NaN,Infinity,-Infinity])assert.throws(()=>zoomRange({start:0,end:100},.5,anchor),RangeError);
+});
+test('invalid JavaScript trace options fail rather than silently changing causal meaning',()=>{
+ const model=new TimelineModel(fixture());
+ for(const options of [{direction:'sideways'},{kinds:['cause']},{kinds:'causes'},{maxDepth:1.5},{maxDepth:NaN},{maxDepth:-1},null])assert.throws(()=>model.trace(['e1'],options));
+ assert.deepEqual(model.trace(['e1'],{kinds:[]}).downstream,[]);
+});
+test('saved views validate all fields and isolate caller mutations',async()=>{
+ const {validateViewState}=await import('../dist/core.js');
+ const value={schemaVersion:1,viewport:{start:0,end:500},selectedEventIds:['e1','e1'],collapsedLaneGroupIds:[],filter:{groupIds:['g1'],query:'item'}};
+ const copy=validateViewState(value);value.filter.groupIds.push('g2');assert.deepEqual(copy.filter.groupIds,['g1']);assert.deepEqual(copy.selectedEventIds,['e1']);
+ for(const invalid of [null,{...value,viewport:null},{...value,filter:{query:3}},{...value,selectedEventIds:[null]},{...value,filter:{groupIds:Array(2)}}])assert.throws(()=>validateViewState(invalid));
+});

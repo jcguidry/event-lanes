@@ -22,3 +22,7 @@ A real operational deployment needs representative volume profiling, API version
 Both initial GitHub Actions workflows completed successfully on clean runners. Source review found and fixed hit targets leaking into the fixed axis/label regions, scroll-dependent double-click coordinates, and retained handlers from repeatedly rebuilding the accessible list. Relationship curves now respect the active event filters. The separate demo preserves filters while restoring a saved view and can build a self-contained offline HTML review copy.
 
 The follow-up browser attempt also rejected `file:` navigation under its URL policy. These changes have compiler/model/build validation, **not** interactive acceptance evidence. The checklist above remains required.
+
+## Integration hardening — October 1, 2026
+
+18 JavaScript core tests now cover malformed trace options, sparse-array rejection, saved-view validation and defensive copying, and one-millisecond ranges at the Date limits. The existing four Python tests remain part of CI. Trace configuration is validated and copied before mounting, so caller mutation cannot invalidate later selections. Toolbar buttons use `type="button"` for embedding inside forms. Saved-view restoration validates the full payload before updating live state. These are automated/model checks and source-reviewed DOM changes; interactive browser acceptance is still outstanding.
