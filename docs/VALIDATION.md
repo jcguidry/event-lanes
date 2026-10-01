@@ -13,7 +13,7 @@ Verified in this workspace on 2026-09-28: TypeScript compilation, standalone bun
 
 ## Limits
 
-Canvas2D with interval indexing and visible-row drawing, not WebGL. No streaming patches, worker pipeline, backend pagination, automatic relationship discovery, undo/redo, advanced label collision layout, hierarchical event aggregation, PDF/SVG export, or automatic optimization. Overlapping intervals share a lane center and may obscure each other. Dense trace overlays are capped at 600 events. Relationship curves do not currently carry arrowheads; direction is explicit in the data and inspector. Touch supports native scrolling; touch event selection and pinch gestures are not implemented. PNG is viewport-only. Text alternative is capped at 200 records. No full accessibility conformance audit has been performed.
+Canvas2D with interval indexing and visible-row drawing, not WebGL. No streaming patches, worker pipeline, backend pagination, automatic relationship discovery, undo/redo, advanced label collision layout, hierarchical event aggregation, PDF/SVG export, or automatic optimization. Overlapping intervals share a lane center and may obscure each other. Dense trace overlays are capped at 600 events. Relationship curves carry arrowheads toward their target events. Touch supports native scrolling; touch event selection and pinch gestures are not implemented. PNG is viewport-only. Text alternative is capped at 200 records. No full accessibility conformance audit has been performed.
 
 A real operational deployment needs representative volume profiling, API versioning policy, integration/security review, and domain-specific validation in its own application. This library renders supplied relationships; it does not establish the truth of a causal claim or compute operational impact metrics.
 
@@ -26,3 +26,7 @@ The follow-up browser attempt also rejected `file:` navigation under its URL pol
 ## Integration hardening — October 1, 2026
 
 18 JavaScript core tests now cover malformed trace options, sparse-array rejection, saved-view validation and defensive copying, and one-millisecond ranges at the Date limits. The existing four Python tests remain part of CI. Trace configuration is validated and copied before mounting, so caller mutation cannot invalidate later selections. Toolbar buttons use `type="button"` for embedding inside forms. Saved-view restoration validates the full payload before updating live state. These are automated/model checks and source-reviewed DOM changes; interactive browser acceptance is still outstanding.
+
+## Navigation and inspection — October 1, 2026
+
+Added `fitTrace()` and selection-preserving `focusEvent(id)`, automatic expansion of relevant collapsed lane groups, disabled empty-selection toolbar actions, and directed relationship arrowheads. 21 JavaScript tests (including three controller-only navigation tests), four Python tests, and build checks cover this revision. The controller tests use layout stubs and do not exercise DOM rendering; interactive acceptance remains outstanding. Verify focus from off-screen/collapsed lanes, filtered-event refusal, trace fitting, and arrow directions including backward-time links before production.

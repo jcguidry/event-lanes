@@ -7,6 +7,8 @@
 | `setData(unknown)` | Validate then replace; retain surviving selected IDs and existing viewport after initial load |
 | `getData()` | Defensive copy of current dataset |
 | `fit(ids?)` | Fit all events, or specified IDs |
+| `fitTrace()` | Fit roots, upstream and downstream; expand their lane groups; preserve selection and filters; no-op for empty selection |
+| `focusEvent(id)` | Expand lane group, pan time if needed and scroll to an event without selecting it; false for unknown or filtered IDs |
 | `getViewport()`, `setViewport({start,end})` | Read/write time range |
 | `zoom(factor, anchorFraction=.5)` | Factor below 1 zooms in; anchor between 0 and 1 |
 | `setSelection(ids,{expandGroups?})` | Replace selection; unknown IDs omitted |
