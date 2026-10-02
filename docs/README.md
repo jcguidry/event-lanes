@@ -1,5 +1,9 @@
 # Documentation map
 
+![Generic Event Lanes timeline showing resource lanes, horizontal UTC time, and stacked selected intervals](images/timeline-stacked-events.png)
+
+Start with the [quickstart](QUICKSTART.md) to embed this timeline in your own application. The screenshot uses synthetic, domain-neutral data; [capture details](images/README.md) describe how to refresh it.
+
 | Goal | Read / run |
 |---|---|
 | First integration | [Quickstart](QUICKSTART.md), `examples/quickstart/` |

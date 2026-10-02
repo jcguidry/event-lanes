@@ -2,6 +2,10 @@
 
 A small, framework-neutral TypeScript library for events, transfers, known groups, and declared causal relationships over time. Entity lanes run vertically; time runs horizontally. MIT licensed, independently implemented, with no domain-specific model or runtime dependencies.
 
+![Event Lanes timeline with generic resource lanes, UTC time ticks, and two selected overlapping intervals on separate tracks](docs/images/timeline-stacked-events.png)
+
+Overlapping events occupy separate tracks within the same entity lane. Orange marks the selected events in this generic browser-test example.
+
 **Status: 0.2, pre-1.0.** Generic library with runnable examples, agent onboarding, explicit data contracts, overlap handling, lane controls, trace explanations and view history. Real Chromium/Firefox/WebKit acceptance and benchmarks run in CI; consult the validation page for the evidence status. This is not a production-readiness claim.
 
 Start with [the documentation index](docs/README.md), [runnable quickstart](docs/QUICKSTART.md), and [data modeling guide](docs/DATA_MODEL.md). Coding agents should read [AGENTS.md](AGENTS.md) first. The [Python walkthrough](docs/PYTHON.md) includes a runnable HTTP/DataFrame example.
@@ -72,6 +76,17 @@ Times are integer **UTC epoch milliseconds**, never seconds or naive strings. Op
 - Accessible event list provides a textual alternative (first 200 matching events).
 
 Dense views aggregate into per-lane time cells; cell counts retain event IDs. One multi-party event is counted once per participating lane. Selected events and their trace are drawn over density cells, up to 600 events. Counts are not fleet-wide totals.
+
+<details>
+<summary>Preview lane search, ordering and sticky pins</summary>
+
+![Expanded lane controls with search, pin and reorder buttons; Resource 2 remains pinned above the vertically scrolled South group](docs/images/timeline-pinned-lanes.png)
+
+Resource 2 stays visible above the scrolling lanes. The lane controls support search, ordering within groups, and up to three requested pins.
+
+</details>
+
+These are actual Chromium captures of the generic acceptance fixture. See [screenshot provenance and refresh instructions](docs/images/README.md).
 
 ## Python / pandas
 
