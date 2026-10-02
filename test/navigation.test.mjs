@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {EventTimeline, TimelineModel} from '../dist/index.js';
+import {EventTimeline, TimelineModel, ViewHistory} from '../dist/index.js';
 
 // Controller-only harness: real navigation/model logic with layout scheduling stubbed.
 // This does not instantiate a DOM or verify browser drawing or pointer interactions.
@@ -14,7 +14,7 @@ function controller(){
  return Object.assign(Object.create(EventTimeline.prototype),{
   model,selected,traceResult:model.trace(selected),filter:{},viewport:{start:0,end:1000},
   collapsed:new Set(['g']),laneY:new Map(),rows:[],height:420,disposed:false,
-  options:{rowHeight:64},formatter:new Intl.DateTimeFormat('en-GB',{timeZone:'UTC'}),spacer:{style:{}},scroll:{scrollTop:0},live:{textContent:''},
+  options:{rowHeight:64,labelWidth:140,densityThreshold:600},width:800,lanePresentation:{query:'',order:[],pinned:[]},pinnedIds:new Set(),pinnedHeight:0,slots:new Map(),history:new ViewHistory(),upstream:new Set(),downstream:new Set(),formatter:new Intl.DateTimeFormat('en-GB',{timeZone:'UTC'}),spacer:{style:{}},scroll:{scrollTop:0},live:{textContent:''},
   schedule(){},updateAccessible(){},emit(){},tip:{hidden:true}
  });
 }

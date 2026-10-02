@@ -2,7 +2,9 @@
 
 A small, framework-neutral TypeScript library for events, transfers, known groups, and declared causal relationships over time. Entity lanes run vertically; time runs horizontally. MIT licensed, independently implemented, with no domain-specific model or runtime dependencies.
 
-**Status: 0.1 prototype.** Core automated tests and builds pass. Interactive browser acceptance testing is still outstanding; this environment blocked the local preview. This is not full KronoGraph feature parity or a production-readiness claim.
+**Status: 0.2, pre-1.0.** Generic library with runnable examples, agent onboarding, explicit data contracts, overlap handling, lane controls, trace explanations and view history. Real Chromium/Firefox/WebKit acceptance and benchmarks run in CI; consult the validation page for the evidence status. This is not a production-readiness claim.
+
+Start with [the documentation index](docs/README.md), [runnable quickstart](docs/QUICKSTART.md), and [data modeling guide](docs/DATA_MODEL.md). Coding agents should read [AGENTS.md](AGENTS.md) first. The [Python walkthrough](docs/PYTHON.md) includes a runnable HTTP/DataFrame example.
 
 ## Build and try
 
@@ -15,7 +17,7 @@ python3 -m unittest discover -s test -p 'test_python.py'
 npm pack
 ```
 
-Install the resulting `.tgz` in any JavaScript app with `npm install /path/to/jcguidry-event-lanes-0.1.0.tgz`. The package has not been published to npm.
+Install the resulting `.tgz` in any JavaScript app with `npm install /path/to/jcguidry-event-lanes-0.2.0.tgz`. The package has not been published to npm.
 
 ```ts
 import { createTimeline } from '@jcguidry/event-lanes';
@@ -63,6 +65,10 @@ Times are integer **UTC epoch milliseconds**, never seconds or naive strings. Op
 - Shift-drag selects a rectangular region. Double-click a density cell to zoom in.
 - Collapse lane groups by clicking their headers.
 - Keyboard: up/down browse events, Enter select, left/right pan, +/- zoom, F/Home fit, Escape clear.
+- Search, reorder and pin lanes with the built-in lane controls.
+- Change trace direction, kinds and depth through the API; inspect shortest declared paths with `explain`.
+- Undo/redo view changes with toolbar buttons or Ctrl/Command Z and Shift Z.
+- Detail events stack on overlapping intervals; selected context gets priority for labels.
 - Accessible event list provides a textual alternative (first 200 matching events).
 
 Dense views aggregate into per-lane time cells; cell counts retain event IDs. One multi-party event is counted once per participating lane. Selected events and their trace are drawn over density cells, up to 600 events. Counts are not fleet-wide totals.
@@ -73,4 +79,4 @@ Use `examples/python/event_lanes.py`. Rename dataframe columns to the camelCase 
 
 Return this dictionary from your backend as JSON. No Python process, pandas dependency, server, or network call is required inside the library. Backend filtering and authorization remain application responsibilities.
 
-See [API](docs/API.md), [limitations and validation](docs/VALIDATION.md), and [contributing](CONTRIBUTING.md).
+See [release policy](docs/RELEASES.md), [measured performance](docs/PERFORMANCE.md), [cold-start agent exercise](docs/COLD_START.md), [API](docs/API.md), [limitations and validation](docs/VALIDATION.md), and [contributing](CONTRIBUTING.md).

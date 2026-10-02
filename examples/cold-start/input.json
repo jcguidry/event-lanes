@@ -1,0 +1,102 @@
+{
+  "resources": [
+    {
+      "key": "lab-a",
+      "name": "Lab A"
+    },
+    {
+      "key": "lab-b",
+      "name": "Lab B"
+    },
+    {
+      "key": "lab-c",
+      "name": "Lab C"
+    }
+  ],
+  "packages": [
+    {
+      "key": "repair",
+      "name": "Repair package"
+    }
+  ],
+  "actions": [
+    {
+      "key": "fault",
+      "at": "2026-10-01T08:00:00-05:00",
+      "name": "Fault found",
+      "resources": [
+        "lab-a"
+      ]
+    },
+    {
+      "key": "move",
+      "at": "2026-10-01T08:05:00-05:00",
+      "name": "Move specimen",
+      "resources": [
+        "lab-a",
+        "lab-b"
+      ],
+      "packages": [
+        "repair"
+      ],
+      "movement": {
+        "source": "lab-a",
+        "destination": "lab-b",
+        "item": "specimen-1"
+      }
+    },
+    {
+      "key": "accept",
+      "at": "2026-10-01T08:07:00-05:00",
+      "name": "Accept specimen",
+      "resources": [
+        "lab-b"
+      ],
+      "packages": [
+        "repair"
+      ]
+    },
+    {
+      "key": "result",
+      "at": "2026-10-01T08:10:00-05:00",
+      "name": "Result available",
+      "resources": [
+        "lab-b"
+      ]
+    },
+    {
+      "key": "note",
+      "at": "2026-10-01T08:06:00-05:00",
+      "name": "Nearby observation",
+      "resources": [
+        "lab-c"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "key": "l1",
+      "from": "fault",
+      "to": "move",
+      "type": "causes"
+    },
+    {
+      "key": "l2",
+      "from": "move",
+      "to": "accept",
+      "type": "enables"
+    },
+    {
+      "key": "l3",
+      "from": "accept",
+      "to": "result",
+      "type": "enables"
+    },
+    {
+      "key": "l4",
+      "from": "note",
+      "to": "move",
+      "type": "correlates"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "lanes": [
+    {
+      "id": "worker-a",
+      "label": "Worker A",
+      "groupId": "team"
+    },
+    {
+      "id": "worker-b",
+      "label": "Worker B",
+      "groupId": "team"
+    }
+  ],
+  "laneGroups": [
+    {
+      "id": "team",
+      "label": "Team"
+    }
+  ],
+  "eventGroups": [
+    {
+      "id": "recovery",
+      "label": "Recovery"
+    }
+  ],
+  "events": [
+    {
+      "id": "hold",
+      "time": 1790856000000,
+      "label": "Resource unavailable",
+      "laneIds": [
+        "worker-a"
+      ]
+    },
+    {
+      "id": "handoff",
+      "time": 1790856060000,
+      "label": "Hand off job 19",
+      "laneIds": [
+        "worker-a",
+        "worker-b"
+      ],
+      "groupIds": [
+        "recovery"
+      ],
+      "transfers": [
+        {
+          "from": "worker-a",
+          "to": "worker-b",
+          "itemId": "job-19"
+        }
+      ]
+    },
+    {
+      "id": "complete",
+      "time": 1790856180000,
+      "label": "Job completed",
+      "laneIds": [
+        "worker-b"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "r1",
+      "source": "hold",
+      "target": "handoff",
+      "kind": "causes"
+    },
+    {
+      "id": "r2",
+      "source": "handoff",
+      "target": "complete",
+      "kind": "enables"
+    }
+  ]
+}

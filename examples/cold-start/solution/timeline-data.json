@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "lanes": [
+    {
+      "id": "lab-a",
+      "label": "Lab A"
+    },
+    {
+      "id": "lab-b",
+      "label": "Lab B"
+    },
+    {
+      "id": "lab-c",
+      "label": "Lab C"
+    }
+  ],
+  "eventGroups": [
+    {
+      "id": "repair",
+      "label": "Repair package"
+    }
+  ],
+  "events": [
+    {
+      "id": "fault",
+      "label": "Fault found",
+      "time": 1790859600000,
+      "laneIds": [
+        "lab-a"
+      ],
+      "metadata": {
+        "sourceTimestamp": "2026-10-01T08:00:00-05:00"
+      }
+    },
+    {
+      "id": "move",
+      "label": "Move specimen",
+      "time": 1790859900000,
+      "laneIds": [
+        "lab-a",
+        "lab-b"
+      ],
+      "groupIds": [
+        "repair"
+      ],
+      "transfers": [
+        {
+          "from": "lab-a",
+          "to": "lab-b",
+          "itemId": "specimen-1"
+        }
+      ],
+      "metadata": {
+        "sourceTimestamp": "2026-10-01T08:05:00-05:00"
+      }
+    },
+    {
+      "id": "accept",
+      "label": "Accept specimen",
+      "time": 1790860020000,
+      "laneIds": [
+        "lab-b"
+      ],
+      "groupIds": [
+        "repair"
+      ],
+      "metadata": {
+        "sourceTimestamp": "2026-10-01T08:07:00-05:00"
+      }
+    },
+    {
+      "id": "result",
+      "label": "Result available",
+      "time": 1790860200000,
+      "laneIds": [
+        "lab-b"
+      ],
+      "metadata": {
+        "sourceTimestamp": "2026-10-01T08:10:00-05:00"
+      }
+    },
+    {
+      "id": "note",
+      "label": "Nearby observation",
+      "time": 1790859960000,
+      "laneIds": [
+        "lab-c"
+      ],
+      "metadata": {
+        "sourceTimestamp": "2026-10-01T08:06:00-05:00"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "id": "l1",
+      "source": "fault",
+      "target": "move",
+      "kind": "causes"
+    },
+    {
+      "id": "l2",
+      "source": "move",
+      "target": "accept",
+      "kind": "enables"
+    },
+    {
+      "id": "l3",
+      "source": "accept",
+      "target": "result",
+      "kind": "enables"
+    },
+    {
+      "id": "l4",
+      "source": "note",
+      "target": "move",
+      "kind": "correlates"
+    }
+  ]
+}

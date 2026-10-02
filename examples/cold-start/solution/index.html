@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab resource timeline — cold-start exercise</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; color: #203b50; max-width: 1120px; margin: 28px auto; padding: 0 18px; }
+    h1, h2 { line-height: 1.2; }
+    h2 { font-size: 19px; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
+    button { font: inherit; padding: 7px 12px; cursor: pointer; }
+    button:disabled { cursor: default; }
+    #timeline { min-height: 420px; }
+    .details { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f4f7fa; padding: 14px; }
+    textarea { box-sizing: border-box; width: 100%; min-height: 210px; padding: 12px; font: 13px/1.5 monospace; }
+    #message { min-height: 1.5em; }
+    @media (max-width: 700px) { .details { grid-template-columns: 1fr; gap: 0; } }
+  </style>
+</head>
+<body>
+  <h1>Lab resource timeline</h1>
+  <p>Each lab is a resource lane. The repair package contains <code>move</code> and <code>accept</code>.
+    All source timestamps carry UTC−05:00; this timeline displays the same instants in UTC.</p>
+  <p>The shared move is one action on two lanes. Its specimen transfer is explicitly Lab A → Lab B.
+    Trace links describe the supplied causes and enables; the nearby correlation is excluded.</p>
+  <div class="controls" aria-label="Timeline actions">
+    <button type="button" id="repair" disabled>Select repair package</button>
+    <button type="button" id="default-trace" disabled>Trace both directions</button>
+    <button type="button" id="downstream" disabled>Trace downstream · depth 2</button>
+    <button type="button" id="locate" disabled>Locate result</button>
+    <button type="button" id="reload" disabled>Reload data</button>
+  </div>
+  <div id="timeline"></div>
+  <p id="message" role="status" aria-live="polite">Loading the supplied lab data…</p>
+  <div class="details">
+    <section aria-labelledby="analysis-heading">
+      <h2 id="analysis-heading">Selected roots and trace</h2>
+      <pre id="analysis"></pre>
+    </section>
+    <section aria-labelledby="explanation-heading">
+      <h2 id="explanation-heading">Why is result included?</h2>
+      <p id="explanation"></p>
+      <pre id="path"></pre>
+    </section>
+  </div>
+  <section aria-labelledby="view-heading">
+    <h2 id="view-heading">Save and restore this view</h2>
+    <p>Save the viewport, selected roots, filters, lane presentation and trace settings.
+      The saved view refers to this dataset; it contains no event records.</p>
+    <div class="controls">
+      <button type="button" id="save" disabled>Save view</button>
+      <button type="button" id="restore" disabled>Restore saved view</button>
+    </div>
+    <label for="saved-view">Saved view JSON</label>
+    <textarea id="saved-view" spellcheck="false" placeholder="Save a view, or paste a view saved from this dataset."></textarea>
+  </section>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

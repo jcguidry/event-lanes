@@ -1,6 +1,6 @@
 {
   "name": "@jcguidry/event-lanes",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Embeddable entity-lane timelines for grouped events, transfers, and explicit causal relationships.",
   "type": "module",
   "license": "MIT",
@@ -25,17 +25,24 @@
     "LICENSE",
     "docs",
     "examples",
-    "src"
+    "src",
+    "AGENTS.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/bundle.mjs",
-    "test": "npm run build && node --test test/*.test.mjs",
+    "test": "npm run build && node --test test/*.test.mjs examples/cold-start/solution/verify.test.mjs",
     "check": "tsc --noEmit -p tsconfig.json",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "check:examples": "tsc -p tsconfig.examples.json && node scripts/check-examples.mjs",
+    "test:browser": "playwright test",
+    "benchmark": "npm run build && node --expose-gc benchmark/core.mjs",
+    "test:package": "node scripts/check-package.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",
-    "esbuild": "0.28.0"
+    "esbuild": "0.28.0",
+    "playwright": "1.62.1"
   },
   "engines": {
     "node": ">=20"

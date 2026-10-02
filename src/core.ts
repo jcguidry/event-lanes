@@ -1,5 +1,5 @@
 export * from './types.js';
-import type { TimelineData, TemporalEvent, TimelineFilter, TraceOptions, TraceResult, Relationship, RelationKind, TimeRange, ViewState } from './types.js';
+import type { TimelineData, TemporalEvent, TimelineFilter, TraceOptions, TraceResult, Relationship, RelationKind, TimeRange, ViewState, LanePresentation, TraceExplanation } from './types.js';
 
 export class DataValidationError extends Error {
   constructor(public readonly issues: string[]) { super(`Invalid timeline data:\n${issues.join('\n')}`); this.name = 'DataValidationError'; }
@@ -145,6 +145,28 @@ export class TimelineModel {
     };
     const direction=checked.direction;return {roots,upstream:direction==='downstream'?[]:walk('upstream'),downstream:direction==='upstream'?[]:walk('downstream'),relationshipIds:[...relationships]};
   }
+  /** Shortest declared path from a selected root in each allowed traversal direction. */
+  explain(eventId: string,ids: Iterable<string>,options: TraceOptions={}): TraceExplanation[] {
+    const checked=validateTraceOptions(options),roots=[...new Set([...ids].filter(id=>this.events.has(id)))];
+    if(!this.events.has(eventId))return [];
+    if(roots.includes(eventId))return [{eventId,rootId:eventId,direction:'root',path:[]}];
+    const explanations: TraceExplanation[]=[],kinds=new Set(checked.kinds);
+    for(const direction of ['upstream','downstream'] as const){
+      if(checked.direction!=='both'&&checked.direction!==direction)continue;
+      const seen=new Set(roots),queue=roots.map(rootId=>({id:rootId,rootId,path:[] as Relationship[]}));
+      for(let i=0;i<queue.length;i++){
+        const current=queue[i]!;if(current.path.length>=checked.maxDepth)continue;
+        for(const edge of (direction==='upstream'?this.incoming:this.outgoing).get(current.id)??[]){
+          if(!kinds.has(edge.kind))continue;const id=direction==='upstream'?edge.source:edge.target;
+          if(seen.has(id))continue;seen.add(id);const path=[...current.path,edge];
+          if(id===eventId){explanations.push({eventId,rootId:current.rootId,direction,path:structuredClone(direction==='upstream'?path.reverse():path)});i=queue.length;break;}
+          queue.push({id,rootId:current.rootId,path});
+        }
+      }
+    }
+    return explanations;
+  }
+
 }
 export interface DensityCell { laneId: string; bucket: number; start: number; end: number; eventIds: string[] }
 /** A cell counts participating events intersecting its interval, never transfer pairs. */
@@ -162,7 +184,7 @@ export function validateTraceOptions(value: TraceOptions={}): Required<TraceOpti
   if(!isObject(value))throw new TypeError('Trace options must be an object');
   const direction=value.direction??'both',kinds=value.kinds??['causes','enables'],maxDepth=value.maxDepth??Infinity;
   if(typeof direction!=='string'||!['upstream','downstream','both'].includes(direction))throw new TypeError('Invalid trace direction');
-  if(!Array.isArray(kinds)||!kinds.every(kind=>relationKinds.includes(kind)))throw new TypeError('Invalid relationship kind');
+  if(!Array.isArray(kinds)||Object.keys(kinds).length!==kinds.length||!kinds.every(kind=>relationKinds.includes(kind)))throw new TypeError('Invalid relationship kind');
   if(typeof maxDepth!=='number'||(maxDepth!==Infinity&&(!Number.isInteger(maxDepth)||maxDepth<0)))throw new RangeError('maxDepth must be a nonnegative integer or Infinity');
   return {direction:direction as Required<TraceOptions>['direction'],kinds:[...kinds],maxDepth};
 }
@@ -178,5 +200,18 @@ export function validateViewState(value: unknown): ViewState {
   if(!isObject(value)||value.schemaVersion!==1)throw new TypeError('Unsupported or invalid view state');
   const ids=(key:string):string[]=>{const list=value[key];if(!Array.isArray(list)||!list.every(str)||Object.keys(list).length!==list.length)throw new TypeError(`Invalid ${key}`);return [...new Set(list)];};
   if(!isObject(value.viewport))throw new TypeError('Invalid viewport');
-  return {schemaVersion:1,viewport:normalizeRange(value.viewport as unknown as TimeRange),filter:validateFilter(value.filter),selectedEventIds:ids('selectedEventIds'),collapsedLaneGroupIds:ids('collapsedLaneGroupIds')};
+  const result: ViewState={schemaVersion:1,viewport:normalizeRange(value.viewport as unknown as TimeRange),filter:validateFilter(value.filter),selectedEventIds:ids('selectedEventIds'),collapsedLaneGroupIds:ids('collapsedLaneGroupIds')};
+  if(value.lanePresentation!==undefined)result.lanePresentation=validateLanePresentation(value.lanePresentation);
+  if(value.trace!==undefined){if(!isObject(value.trace))throw new TypeError('Invalid saved trace');const checked=validateTraceOptions({...value.trace,maxDepth:value.trace.maxDepth===null?Infinity:value.trace.maxDepth} as TraceOptions);result.trace={...checked,maxDepth:checked.maxDepth===Infinity?null:checked.maxDepth};}
+  if(value.scrollTop!==undefined){if(typeof value.scrollTop!=='number'||!Number.isFinite(value.scrollTop)||value.scrollTop<0)throw new TypeError('Invalid scrollTop');result.scrollTop=value.scrollTop;}
+  return result;
 }
+export function validateLanePresentation(value:unknown):LanePresentation {
+  if(!isObject(value)||typeof value.query!=='string')throw new TypeError('Invalid lane presentation');
+  const list=(key:string)=>{const v=value[key];if(!Array.isArray(v)||Object.keys(v).length!==v.length||!v.every(str))throw new TypeError(`Invalid lane ${key}`);return [...new Set(v)];};
+  const pinned=list('pinned');if(pinned.length>3)throw new RangeError('At most three lanes can be pinned');return {query:value.query,order:list('order'),pinned};
+}
+
+
+export {packEventSlots,placeLabels} from './layout.js';
+export {ViewHistory} from './history.js';

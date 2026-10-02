@@ -1,5 +1,10 @@
 name: Validate
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -11,10 +16,76 @@ jobs:
       - run: npm install
       - run: npm test
       - run: python3 -m unittest discover -s test -p 'test_python.py'
+      - run: python3 -m pip install pandas==2.2.3
+      - run: npm run check:examples
+        env:
+          EVENT_LANES_TEST_PANDAS: '1'
+      - run: npm run test:package
+      - run: npm run benchmark
       - run: npm pack
       - uses: actions/upload-artifact@v4
         with:
-          name: event-lanes-package
-          path: '*.tgz'
+          name: event-lanes-package-and-benchmarks
+          path: |
+            *.tgz
+            benchmark/results/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install && npm run build
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-acceptance-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 90
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, browser]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install && npm run build && npm pack
+      - name: Publish versioned release once
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const crypto = require('node:crypto');
+            const version = JSON.parse(fs.readFileSync('package.json')).version;
+            const tag = `v${version}`;
+            try {
+              await github.rest.repos.getReleaseByTag({...context.repo, tag});
+              core.info(`${tag} already exists; immutable release retained`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            const release = await github.rest.repos.createRelease({
+              ...context.repo, tag_name: tag, target_commitish: context.sha,
+              name: `Event Lanes ${version}`, prerelease: true,
+              body: fs.readFileSync('CHANGELOG.md', 'utf8') + '\n\nInstall the attached package tarball. This pre-1.0 release passed model, Python, examples, package, Chromium, Firefox and WebKit acceptance checks. Performance is fixture-specific; see docs/PERFORMANCE.md. No npm registry publication is performed.'
+            });
+            const assets = [fs.readdirSync('.').find(name=>name.endsWith('.tgz')), 'dist/event-lanes.global.js', 'schema.json'];
+            const checksums = assets.map(path=>`${crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex')}  ${path.split('/').pop()}`).join('\n')+'\n';
+            fs.writeFileSync('SHA256SUMS.txt', checksums);assets.push('SHA256SUMS.txt');
+            for (const path of assets) await github.rest.repos.uploadReleaseAsset({
+              ...context.repo, release_id: release.data.id,
+              name: path.split('/').pop(), data: fs.readFileSync(path)
+            });

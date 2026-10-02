@@ -19,8 +19,11 @@ export interface TimeRange { start: number; end: number }
 export interface TimelineFilter { laneIds?: string[]; groupIds?: string[]; kinds?: string[]; query?: string }
 export interface TraceOptions { direction?: 'upstream' | 'downstream' | 'both'; kinds?: RelationKind[]; maxDepth?: number }
 export interface TraceResult { roots: string[]; upstream: string[]; downstream: string[]; relationshipIds: string[] }
+export interface LanePresentation { query: string; order: string[]; pinned: string[] }
+export interface SavedTraceOptions { direction: 'upstream'|'downstream'|'both'; kinds: RelationKind[]; maxDepth: number|null }
+export interface TraceExplanation {eventId:string;rootId:string;direction:'root'|'upstream'|'downstream';path:Relationship[]}
 export interface SelectionDetail { eventIds: string[]; groupIds: string[]; trace: TraceResult; source: 'user' | 'api' | 'data' }
-export interface ViewState { schemaVersion: 1; viewport: TimeRange; selectedEventIds: string[]; filter: TimelineFilter; collapsedLaneGroupIds: string[] }
+export interface ViewState { schemaVersion: 1; viewport: TimeRange; selectedEventIds: string[]; filter: TimelineFilter; collapsedLaneGroupIds: string[]; lanePresentation?: LanePresentation; trace?: SavedTraceOptions; scrollTop?: number }
 export interface TimelineOptions {
   height?: number; rowHeight?: number; labelWidth?: number; timeZone?: string;
   selectionMode?: 'event' | 'group'; densityThreshold?: number; showRelationships?: boolean;
@@ -28,6 +31,7 @@ export interface TimelineOptions {
 }
 export interface TimelineEvents {
   selection: SelectionDetail;
+  view: ViewState;
   viewport: TimeRange & { source: 'user' | 'api' };
   hover: { eventIds: string[] };
   activate: { eventIds: string[] };

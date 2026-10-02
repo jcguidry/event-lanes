@@ -1,32 +1,21 @@
-# Validation and current limits
+# Validation status and current limits
 
-Verified in this workspace on 2026-09-28: TypeScript compilation, standalone bundle generation, 14 Node core tests (including randomized interval-index comparisons), and Python adapter tests. The separate demo bundles successfully and generates 14-event and 5,000-event fixtures. Browser interaction acceptance is **not yet verified**: the remote browser blocked localhost, and its runtime did not permit a local HTTP listener. No FPS, million-event, mobile, or cross-browser performance claim is made.
+## v0.2 verification — October 1, 2026 (Chicago)
 
-## Acceptance checklist before production
+Local checks pass: TypeScript/library and typed example compilation; 33 JavaScript model/controller/cold-start tests; four Python adapter tests; record and pandas DataFrame conversion equivalence; package tarball imports/content; core benchmarks at 1,000/10,000/100,000 events; separate private demo fixture and portable-build checks. Controller stubs do not exercise a DOM.
 
-- Select a group with three roots, one upstream cause and two downstream effects; correlation must remain excluded.
-- Verify click, modifier toggle, marquee, pointer-anchored zoom, horizontal pan and vertical native scrolling.
-- Verify collapsed lane groups, hidden selected events, empty filters, resize and repeated mount/destroy.
-- Load 5,000 events and 80 lanes; inspect density cells, deep lane scrolling, labels, and drill-down.
-- Export PNG/selection/view; restore a view; invalid JSON must preserve existing data.
-- Test Safari/Firefox/Chromium, keyboard-only operation, screen reader announcements, and narrow containers.
+The real browser suite is implemented for Chromium, Firefox and WebKit in GitHub Actions. It covers canvas click/modifier/marquee selection, pointer-anchored zoom, pan, native scroll, collapsed groups, focus, lane controls, trace direction/depth, explanations, undo/redo, view restoration, invalid input, PNG, density drill-down, resize, repeated lifecycle, all quickstart formats, the cold-start page and a Python HTTP endpoint. It records screenshots and failure traces. Its execution result is pending at this source revision; update this paragraph from the actual CI result rather than assuming implementation implies acceptance.
 
-## Limits
+## Current limits
 
-Canvas2D with interval indexing and visible-row drawing, not WebGL. No streaming patches, worker pipeline, backend pagination, automatic relationship discovery, undo/redo, advanced label collision layout, hierarchical event aggregation, PDF/SVG export, or automatic optimization. Overlapping intervals share a lane center and may obscure each other. Dense trace overlays are capped at 600 events. Relationship curves carry arrowheads toward their target events. Touch supports native scrolling; touch event selection and pinch gestures are not implemented. PNG is viewport-only. Text alternative is capped at 200 records. No full accessibility conformance audit has been performed.
+Canvas2D on the main thread, with interval indexing and visible-row drawing. No streaming patches, worker pipeline, backend paging, automatic relationship discovery, PDF/SVG or full-document PNG export. Event geometry stacks within lanes; label collision handling prioritizes/suppresses text rather than performing global optimization. Trace overlays are capped at densityThreshold (600 default). Up to three requested sticky pins must fit while leaving an ordinary row; other pins use normal placement. Accessible event lists and lane controls each show at most 200 matches. Touch native scrolling works, but touch selection and pinch are not implemented. No accessibility conformance or real mobile-device audit has been performed.
 
-A real operational deployment needs representative volume profiling, API versioning policy, integration/security review, and domain-specific validation in its own application. This library renders supplied relationships; it does not establish the truth of a causal claim or compute operational impact metrics.
+Undo/redo stores at most 100 views and coalesces short viewport/scroll gestures. Dataset replacement resets history. Explanations show shortest supplied paths, not proof of causality or computed operational impact. See [performance](PERFORMANCE.md) for measured scope and fixture limitations.
 
-## Follow-up review — September 28, 2026
+## Remaining human acceptance
 
-Both initial GitHub Actions workflows completed successfully on clean runners. Source review found and fixed hit targets leaking into the fixed axis/label regions, scroll-dependent double-click coordinates, and retained handlers from repeatedly rebuilding the accessible list. Relationship curves now respect the active event filters. The separate demo preserves filters while restoring a saved view and can build a self-contained offline HTML review copy.
+Review CI screenshots at wide/narrow sizes, check long labels and heavy interval overlap using representative data, test keyboard/screen-reader behavior, and profile the intended graph topology on real target devices. Automated interaction acceptance and visual review are separate forms of evidence.
 
-The follow-up browser attempt also rejected `file:` navigation under its URL policy. These changes have compiler/model/build validation, **not** interactive acceptance evidence. The checklist above remains required.
+## Historical implementation notes
 
-## Integration hardening — October 1, 2026
-
-18 JavaScript core tests now cover malformed trace options, sparse-array rejection, saved-view validation and defensive copying, and one-millisecond ranges at the Date limits. The existing four Python tests remain part of CI. Trace configuration is validated and copied before mounting, so caller mutation cannot invalidate later selections. Toolbar buttons use `type="button"` for embedding inside forms. Saved-view restoration validates the full payload before updating live state. These are automated/model checks and source-reviewed DOM changes; interactive browser acceptance is still outstanding.
-
-## Navigation and inspection — October 1, 2026
-
-Added `fitTrace()` and selection-preserving `focusEvent(id)`, automatic expansion of relevant collapsed lane groups, disabled empty-selection toolbar actions, and directed relationship arrowheads. 21 JavaScript tests (including three controller-only navigation tests), four Python tests, and build checks cover this revision. The controller tests use layout stubs and do not exercise DOM rendering; interactive acceptance remains outstanding. Verify focus from off-screen/collapsed lanes, filtered-event refusal, trace fitting, and arrow directions including backward-time links before production.
+The v0.1 local preview was blocked by browser URL restrictions; no alternate browser was used to evade them. Initial core/build checks and subsequent controller hardening were accurately limited to model/source evidence. That earlier feature inventory preceded overlap layout, lane controls, adjustable tracing, explanations and undo/redo in v0.2. The reusable cold-start exercise identified this distinction and prompted this separation of current status from historical notes.

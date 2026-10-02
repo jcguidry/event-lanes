@@ -1,0 +1,100 @@
+{
+  "measuredAt": "2026-10-02T00:15:07.260Z",
+  "runtime": "v24.19.0",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "cpuCount": 9,
+  "totalMemoryBytes": 10451464192,
+  "method": "Seeded fixture; 10-event directed packages; 5-minute range queries; wall clock; build/density only three samples; heap delta is approximate and includes temporary allocations.",
+  "results": [
+    {
+      "events": 1000,
+      "lanes": 20,
+      "modelBuild": {
+        "p50Ms": 10.078,
+        "p95Ms": 16.14,
+        "samples": 3
+      },
+      "query": {
+        "p50Ms": 0.006,
+        "p95Ms": 0.03,
+        "samples": 60
+      },
+      "trace": {
+        "p50Ms": 0.008,
+        "p95Ms": 0.019,
+        "samples": 60
+      },
+      "density": {
+        "p50Ms": 0.94,
+        "p95Ms": 1.643,
+        "samples": 3
+      },
+      "detailLayout600": {
+        "p50Ms": 0.494,
+        "p95Ms": 1.473,
+        "samples": 10
+      },
+      "heapDeltaBytes": 4275344
+    },
+    {
+      "events": 10000,
+      "lanes": 80,
+      "modelBuild": {
+        "p50Ms": 93.32,
+        "p95Ms": 95.473,
+        "samples": 3
+      },
+      "query": {
+        "p50Ms": 0.028,
+        "p95Ms": 0.084,
+        "samples": 60
+      },
+      "trace": {
+        "p50Ms": 0.004,
+        "p95Ms": 0.02,
+        "samples": 60
+      },
+      "density": {
+        "p50Ms": 4.238,
+        "p95Ms": 4.712,
+        "samples": 3
+      },
+      "detailLayout600": {
+        "p50Ms": 0.493,
+        "p95Ms": 0.872,
+        "samples": 10
+      },
+      "heapDeltaBytes": 42400200
+    },
+    {
+      "events": 100000,
+      "lanes": 500,
+      "modelBuild": {
+        "p50Ms": 828.965,
+        "p95Ms": 925.249,
+        "samples": 3
+      },
+      "query": {
+        "p50Ms": 0.283,
+        "p95Ms": 0.943,
+        "samples": 60
+      },
+      "trace": {
+        "p50Ms": 0.004,
+        "p95Ms": 0.005,
+        "samples": 60
+      },
+      "density": {
+        "p50Ms": 85.64,
+        "p95Ms": 89.106,
+        "samples": 3
+      },
+      "detailLayout600": {
+        "p50Ms": 2.681,
+        "p95Ms": 3.952,
+        "samples": 10
+      },
+      "heapDeltaBytes": 303845264
+    }
+  ]
+}

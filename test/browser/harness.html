@@ -1,0 +1,21 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Generic acceptance harness</title><style>body{margin:20px;font:14px system-ui}#timeline{max-width:1100px}button,input,select{margin:3px;padding:6px}pre{white-space:pre-wrap}</style><h1>Generic acceptance harness</h1><button id="group">Select package</button><button id="png">Download PNG</button><button id="save">Save view</button><button id="restore">Restore view</button><input id="query" aria-label="Event search"><select id="direction" aria-label="Trace direction"><option value="both">Both</option><option value="downstream">Downstream</option></select><input id="depth" aria-label="Trace depth" type="number" min="0" placeholder="Unlimited"><textarea id="state" aria-label="View JSON"></textarea><div id="timeline"></div><pre id="selection"></pre><pre id="explanation"></pre><script type="module">
+import {createTimeline} from '../../dist/index.js';
+import {syntheticData,BASE} from '../../benchmark/fixture.mjs';
+const lanes=Array.from({length:8},(_,i)=>({id:`lane-${i}`,label:`Resource ${i+1}`,groupId:i<4?'north':'south'}));
+const event=(id,time,laneIds,extra={})=>({id,label:id,time:BASE+time,laneIds,...extra});
+window.fixture={schemaVersion:1,lanes,laneGroups:[{id:'north',label:'North'},{id:'south',label:'South'}],eventGroups:[{id:'package',label:'Package'}],events:[event('e0',0,['lane-0']),event('e1',4000,['lane-0'],{groupIds:['package']}),event('e2',8000,['lane-0','lane-1'],{groupIds:['package'],transfers:[{from:'lane-0',to:'lane-1',itemId:'job'}]}),event('e3',12000,['lane-1']),event('note',8000,['lane-2']),event('late',24000,['lane-7'])],relationships:[{id:'r01',source:'e0',target:'e1',kind:'causes'},{id:'r12',source:'e1',target:'e2',kind:'enables'},{id:'r23',source:'e2',target:'e3',kind:'causes'},{id:'rn',source:'note',target:'e2',kind:'correlates'}]};
+window.timeline=createTimeline(document.getElementById('timeline'),{height:400,labelWidth:140,selectionMode:'group'});
+const t=window.timeline;
+t.on('selection',s=>{document.getElementById('selection').textContent=JSON.stringify(s);document.getElementById('explanation').textContent=JSON.stringify(t.explain('e3'));});
+t.setData(window.fixture);
+window.loadStress=n=>{t.setData(syntheticData(n,80));t.fit();};
+window.settle=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+document.getElementById('group').onclick=()=>t.selectGroup('package');
+document.getElementById('query').oninput=e=>t.setFilter({query:e.target.value});
+function trace(){const d=document.getElementById('depth').value;t.setTraceOptions({direction:document.getElementById('direction').value,maxDepth:d===''?Infinity:Number(d)});}
+document.getElementById('direction').onchange=trace;document.getElementById('depth').onchange=trace;
+document.getElementById('png').onclick=()=>{const a=document.createElement('a');a.href=t.exportPng();a.download='timeline.png';a.click();};
+document.getElementById('save').onclick=()=>document.getElementById('state').value=JSON.stringify(t.getViewState());
+document.getElementById('restore').onclick=()=>{try{t.restoreViewState(JSON.parse(document.getElementById('state').value));}catch(error){document.getElementById('selection').textContent=error.message;}};
+window.addEventListener('pagehide',()=>t.destroy(),{once:true});
+</script></html>

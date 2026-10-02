@@ -1,0 +1,12 @@
+import {createTimeline} from '../../dist/index.js';
+const timeline=createTimeline(document.getElementById('timeline'),{selectionMode:'group',height:350});
+const status=document.getElementById('status');let saved;
+timeline.on('selection',s=>{status.textContent=JSON.stringify({selected:s.eventIds,upstream:s.trace.upstream,downstream:s.trace.downstream},null,2);});
+const response=await fetch('./data.json');if(!response.ok)throw new Error(`HTTP ${response.status}`);
+timeline.setData(await response.json());
+document.getElementById('select').onclick=()=>{timeline.selectGroup('recovery');timeline.fitTrace();};
+document.getElementById('locate').onclick=()=>timeline.focusEvent('complete');
+document.getElementById('save').onclick=()=>{saved=JSON.stringify(timeline.getViewState());status.textContent=saved;};
+document.getElementById('restore').onclick=()=>{if(saved)timeline.restoreViewState(JSON.parse(saved));};
+timeline.selectGroup('recovery');timeline.fitTrace();
+window.addEventListener('pagehide',()=>timeline.destroy(),{once:true});
