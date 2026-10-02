@@ -17,7 +17,7 @@ python3 -m unittest discover -s test -p 'test_python.py'
 npm pack
 ```
 
-Install the resulting `.tgz` in any JavaScript app with `npm install /path/to/jcguidry-event-lanes-0.2.0.tgz`. The package has not been published to npm.
+Install the resulting `.tgz` in any JavaScript app with `npm install /path/to/jcguidry-event-lanes-0.2.1.tgz`. The package has not been published to npm.
 
 ```ts
 import { createTimeline } from '@jcguidry/event-lanes';

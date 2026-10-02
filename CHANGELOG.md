@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — 2026-10-01
+
+- Record successful three-browser acceptance and human screenshot review; keep those evidence scopes distinct.
+- Position right-edge event labels before their markers so available space can preserve their text.
+- Include core and Chromium benchmark baselines and clarify the scheduling floor.
+- Correct the anchor acceptance test to use the wheel event's observed coordinates; retain the strict two-millisecond assertion.
+
 ## 0.2.0 — 2026-10-01
 
 - Add agent onboarding, architecture/data guides, recipes, troubleshooting, runnable JS/TS/global and Python/DataFrame examples, and cold-start exercise.

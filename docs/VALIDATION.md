@@ -4,7 +4,7 @@
 
 Local checks pass: TypeScript/library and typed example compilation; 33 JavaScript model/controller/cold-start tests; four Python adapter tests; record and pandas DataFrame conversion equivalence; package tarball imports/content; core benchmarks at 1,000/10,000/100,000 events; separate private demo fixture and portable-build checks. Controller stubs do not exercise a DOM.
 
-The real browser suite is implemented for Chromium, Firefox and WebKit in GitHub Actions. It covers canvas click/modifier/marquee selection, pointer-anchored zoom, pan, native scroll, collapsed groups, focus, lane controls, trace direction/depth, explanations, undo/redo, view restoration, invalid input, PNG, density drill-down, resize, repeated lifecycle, all quickstart formats, the cold-start page and a Python HTTP endpoint. It records screenshots and failure traces. Its execution result is pending at this source revision; update this paragraph from the actual CI result rather than assuming implementation implies acceptance.
+The real browser suite is implemented for Chromium, Firefox and WebKit in GitHub Actions. It covers canvas click/modifier/marquee selection, pointer-anchored zoom, pan, native scroll, collapsed groups, focus, lane controls, trace direction/depth, explanations, undo/redo, view restoration, invalid input, PNG, density drill-down, resize, repeated lifecycle, all quickstart formats, the cold-start page and a Python HTTP endpoint. It records screenshots and failure traces. CI run [36946159871](https://github.com/jcguidry/event-lanes/actions/runs/36946159871) passed 25 browser checks (eight interactions in each of Chromium, Firefox and WebKit, plus one Chromium benchmark); two benchmark instances were intentionally skipped in the other engines. The same run passed model/Python/example/package gates and published v0.2.0. The initial browser run exposed a test assumption about fractional pointer coordinates; using the actual WheelEvent coordinate made the unchanged strict two-millisecond anchor assertion pass in all three engines. The v0.2.1 revision adds a right-edge label placement adjustment and repeats release gates.
 
 ## Current limits
 
@@ -14,7 +14,7 @@ Undo/redo stores at most 100 views and coalesces short viewport/scroll gestures.
 
 ## Remaining human acceptance
 
-Review CI screenshots at wide/narrow sizes, check long labels and heavy interval overlap using representative data, test keyboard/screen-reader behavior, and profile the intended graph topology on real target devices. Automated interaction acceptance and visual review are separate forms of evidence.
+A maintainer reviewed the actual Chromium stacked-event/pinned-lane screenshots and private-demo wide/narrow screenshots from CI. They show separate interval tracks, sticky pin placement and a contained stacked page at 390px width. That review led to the right-edge label adjustment in v0.2.1. Further review should include check long labels and heavy interval overlap using representative data, test keyboard/screen-reader behavior, and profile the intended graph topology on real target devices. Automated interaction acceptance and visual review are separate forms of evidence.
 
 ## Historical implementation notes
 

@@ -1,6 +1,6 @@
 {
   "name": "@jcguidry/event-lanes",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Embeddable entity-lane timelines for grouped events, transfers, and explicit causal relationships.",
   "type": "module",
   "license": "MIT",

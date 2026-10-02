@@ -1,6 +1,6 @@
 # Releases and compatibility
 
-The current package version is 0.2.0, with data/view `schemaVersion: 1`. v0.2 adds optional saved-view fields and new APIs; old schema-1 views remain valid. Runtime validation remains authoritative. Default trace semantics remain causes/enables, both directions, unlimited depth.
+The current package version is 0.2.1, with data/view `schemaVersion: 1`. v0.2 adds optional saved-view fields and new APIs; old schema-1 views remain valid. Runtime validation remains authoritative. Default trace semantics remain causes/enables, both directions, unlimited depth.
 
 Before 1.0, breaking API changes require a minor version; fixes and compatible documentation updates use a patch. After 1.0 use ordinary SemVer. Breaking JSON changes require a new schema version and migration notes, not silent reinterpretation. Release tags are immutable.
 
@@ -9,7 +9,7 @@ CI publishes a versioned GitHub release only after model, Python, example, packa
 Install a downloaded release tarball into any JavaScript application:
 
 ```sh
-npm install ./jcguidry-event-lanes-0.2.0.tgz
+npm install ./jcguidry-event-lanes-0.2.1.tgz
 ```
 
 Or pin a GitHub release tarball URL once the release exists. CI for consumers should pin a release or exact commit, never assume main is immutable. The private demo pins the exact public library revision.
