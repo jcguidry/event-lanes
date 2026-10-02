@@ -2,16 +2,19 @@ import {test,expect} from 'playwright/test';
 import {readFile,writeFile} from 'node:fs/promises';
 const selected=page=>page.evaluate(()=>window.timeline.getSelection());
 const settle=page=>page.evaluate(()=>window.settle());
+async function capture(page,info,name){
+ if(info.project.name==='chromium'){await settle(page);await page.locator('#timeline').screenshot({path:info.outputPath(name)});}
+}
 async function point(page,id,lane=0){
  // Independent initial-fixture geometry: 30px group heading, 64px rows, 24px first slot.
  return page.evaluate(({id,lane})=>{const t=window.timeline,e=window.fixture.events.find(e=>e.id===id),v=t.getViewport(),scroll=document.querySelector('#timeline>div').shadowRoot.querySelector('.scroll'),r=scroll.getBoundingClientRect(),left=Math.min(140,Math.max(70,r.width*.32)),plot=r.width-left-16;return {x:r.x+left+(e.time-v.start)/(v.end-v.start)*plot,y:r.y+44+30+lane*64+(lane>=4?30:0)+24-scroll.scrollTop};},{id,lane});
 }
 test.beforeEach(async({page})=>{page.__errors=[];page.on('pageerror',error=>page.__errors.push(error.message));await page.goto('/test/browser/harness.html');await page.waitForFunction(()=>Boolean(window.timeline));await settle(page);});
 test.afterEach(async({page})=>{expect(page.__errors).toEqual([]);});
-test('click, modifier toggle, keyboard and marquee selection',async({page})=>{
+test('click, modifier toggle, keyboard and marquee selection',async({page},info)=>{
  const p=await point(page,'e1');await page.mouse.click(p.x,p.y);await expect.poll(()=>selected(page)).toEqual(['e1','e2']);
  await page.keyboard.down('Control');await page.mouse.click(p.x,p.y);await page.keyboard.up('Control');await expect.poll(()=>selected(page)).toEqual([]);
- const q=await point(page,'e2',1);await page.keyboard.down('Shift');await page.mouse.move(p.x-12,p.y-12);await page.mouse.down();await page.mouse.move(q.x+15,q.y+15,{steps:8});await page.mouse.up();await page.keyboard.up('Shift');await expect.poll(()=>selected(page)).toEqual(['e1','e2']);
+ const q=await point(page,'e2',1);await page.keyboard.down('Shift');await page.mouse.move(p.x-12,p.y-12);await page.mouse.down();await page.mouse.move(q.x+15,q.y+15,{steps:8});await capture(page,info,'timeline-marquee.png');await page.mouse.up();await page.keyboard.up('Shift');await expect.poll(()=>selected(page)).toEqual(['e1','e2']);
  await page.locator('.scroll').focus();await page.keyboard.press('Escape');await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');await expect.poll(()=>selected(page)).toEqual(['e0']);
 });
 test('pointer-anchored zoom and drag pan preserve the expected time direction',async({page})=>{
@@ -31,14 +34,16 @@ test('lane search, sticky pins and group-aware ordering are operable controls',a
  await page.getByText('Lane controls · search, order and pin',{exact:true}).click();await page.getByRole('button',{name:'Pin Resource 2',exact:true}).click();
  expect((await page.evaluate(()=>window.timeline.getLanePresentation())).pinned).toEqual(['lane-1']);
  await page.getByRole('button',{name:'Move up Resource 2',exact:true}).click();expect((await page.evaluate(()=>window.timeline.getLanePresentation())).order.slice(0,2)).toEqual(['lane-1','lane-0']);
- await page.getByLabel('Find lanes').fill('Resource 2');expect(await page.locator('.lane-control').count()).toBe(1);await page.getByLabel('Find lanes').fill('');
+ await page.getByLabel('Find lanes').fill('Resource 2');expect(await page.locator('.lane-control').count()).toBe(1);await capture(page,info,'timeline-lane-search.png');await page.getByLabel('Find lanes').fill('');
  const r=await page.locator('.scroll').boundingBox();await page.mouse.move(r.x+300,r.y+250);await page.mouse.wheel(0,400);await settle(page);
- await page.screenshot({path:info.outputPath('pinned-lanes.png'),fullPage:true});
+ await capture(page,info,'pinned-lanes.png');
 });
-test('trace settings and explanations follow supplied directed paths',async({page})=>{
+test('trace settings and explanations follow supplied directed paths',async({page},info)=>{
  await page.locator('#group').click();const initial=JSON.parse(await page.locator('#selection').textContent());expect(initial.trace.upstream).toEqual(['e0']);expect(initial.trace.downstream).toEqual(['e3']);expect(await page.locator('#explanation').textContent()).toContain('r23');
+ await capture(page,info,'timeline-group-trace.png');
  await page.getByLabel('Trace direction',{exact:true}).selectOption('downstream');await page.getByLabel('Trace depth',{exact:true}).fill('0');await page.getByLabel('Trace depth',{exact:true}).blur();expect(JSON.parse(await page.locator('#selection').textContent()).trace.downstream).toEqual([]);
  await page.getByLabel('Trace depth',{exact:true}).fill('1');await page.getByLabel('Trace depth',{exact:true}).blur();expect(JSON.parse(await page.locator('#selection').textContent()).trace.downstream).toEqual(['e3']);expect(await page.locator('#explanation').textContent()).not.toContain('rn');
+ await capture(page,info,'timeline-downstream-trace.png');
 });
 test('undo, redo, saved views, invalid restoration and PNG export',async({page})=>{
  await page.locator('#group').click();await page.getByRole('button',{name:'Clear selection',exact:true}).click();await page.getByRole('button',{name:'Undo',exact:true}).click();expect(await selected(page)).toEqual(['e1','e2']);await page.getByRole('button',{name:'Redo',exact:true}).click();expect(await selected(page)).toEqual([]);
@@ -47,11 +52,13 @@ test('undo, redo, saved views, invalid restoration and PNG export',async({page})
  const pending=page.waitForEvent('download');await page.locator('#png').click();const file=await (await pending).path();expect((await readFile(file)).subarray(0,8).toString('hex')).toBe('89504e470d0a1a0a');
 });
 test('detail stacking, dense drill-down, resize and lifecycle',async({page},info)=>{
- await page.evaluate(()=>{const d=structuredClone(window.fixture);d.events.push({id:'overlap-a',label:'Overlapping A',time:d.events[1].time,endTime:d.events[2].time+1000,laneIds:['lane-0']},{id:'overlap-b',label:'Overlapping B',time:d.events[1].time,endTime:d.events[2].time+2000,laneIds:['lane-0']});window.timeline.setData(d);window.timeline.setSelection(['overlap-a','overlap-b']);});await settle(page);await page.screenshot({path:info.outputPath('stacked-events.png'),fullPage:true});
+ await page.evaluate(()=>{const d=structuredClone(window.fixture);d.events.push({id:'overlap-a',label:'Overlapping A',time:d.events[1].time,endTime:d.events[2].time+1000,laneIds:['lane-0']},{id:'overlap-b',label:'Overlapping B',time:d.events[1].time,endTime:d.events[2].time+2000,laneIds:['lane-0']});window.timeline.setData(d);window.timeline.setSelection(['overlap-a','overlap-b']);});await capture(page,info,'stacked-events.png');
  // Verify two selected markers occupy distinct vertical positions in the rendered canvas.
  const rows=await page.evaluate(()=>{const host=document.querySelector('#timeline>div'),c=host.shadowRoot.querySelector('canvas'),v=window.timeline.getViewport(),time=window.fixture.events[1].time,left=140,width=c.clientWidth-156,x=Math.round((left+(time-v.start)/(v.end-v.start)*width)*(c.width/c.clientWidth)),pixels=c.getContext('2d').getImageData(x,0,1,c.height).data,ys=[];for(let y=0;y<c.height;y++)if(pixels[y*4]>180&&pixels[y*4+1]>80&&pixels[y*4+1]<180&&pixels[y*4+2]<60)ys.push(y);return ys;});expect(Math.max(...rows)-Math.min(...rows)).toBeGreaterThan(20);
  await page.evaluate(()=>window.loadStress(5000));await settle(page);await expect(page.locator('.status')).toContainText('Density view');const before=await page.evaluate(()=>window.timeline.getViewport());
+ await capture(page,info,'timeline-density.png');
  const densePoint=await page.evaluate(()=>{const t=window.timeline,v=t.getViewport(),e=t.getData().events.find(e=>e.laneIds.includes('lane-0'));return {time:e.time};});await settle(page);const box=await page.locator('.scroll').boundingBox(),plot=box.width-156,bins=Math.floor(plot/14),bucket=Math.floor((densePoint.time-before.start)/(before.end-before.start)*bins);await page.mouse.dblclick(box.x+140+(bucket+.5)*plot/bins,box.y+44+32);await settle(page);const after=await page.evaluate(()=>window.timeline.getViewport());expect(after.end-after.start).toBeLessThan(before.end-before.start);
+ await capture(page,info,'timeline-density-drilldown.png');
  await page.setViewportSize({width:380,height:800});await settle(page);expect((await page.locator('.scroll').boundingBox()).width).toBeLessThan(380);await page.screenshot({path:info.outputPath('narrow-container.png'),fullPage:true});
  await page.evaluate(()=>window.timeline.destroy());expect(await page.locator('#timeline>div').count()).toBe(0);await page.evaluate(async()=>{const {createTimeline}=await import('/dist/index.js');for(let i=0;i<10;i++){const t=createTimeline(document.getElementById('timeline'));t.setData(window.fixture);t.destroy();}});expect(await page.locator('#timeline>div').count()).toBe(0);
 });
