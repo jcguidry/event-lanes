@@ -15,9 +15,9 @@ test('click, modifier toggle, keyboard and marquee selection',async({page})=>{
  await page.locator('.scroll').focus();await page.keyboard.press('Escape');await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');await expect.poll(()=>selected(page)).toEqual(['e0']);
 });
 test('pointer-anchored zoom and drag pan preserve the expected time direction',async({page})=>{
- const r=await page.locator('.scroll').boundingBox(),v=await page.evaluate(()=>window.timeline.getViewport());const x=r.x+140+(r.width-156)*.75;
+ const r=await page.locator('.scroll').boundingBox(),v=await page.evaluate(()=>window.timeline.getViewport());const x=r.x+140+(r.width-156)*.75;await page.evaluate(()=>{const scroll=document.querySelector('#timeline>div').shadowRoot.querySelector('.scroll');scroll.addEventListener('wheel',e=>{const rect=scroll.getBoundingClientRect();window.lastWheelFraction=(e.clientX-rect.left-140)/(scroll.clientWidth-156);},{once:true});});
  await page.mouse.move(x,r.y+190);await page.keyboard.down('Control');await page.mouse.wheel(0,-100);await page.keyboard.up('Control');await settle(page);
- const zoomed=await page.evaluate(()=>window.timeline.getViewport());expect(zoomed.end-zoomed.start).toBeLessThan(v.end-v.start);expect(Math.abs((v.start+(v.end-v.start)*.75)-(zoomed.start+(zoomed.end-zoomed.start)*.75))).toBeLessThan(2);
+ const zoomed=await page.evaluate(()=>window.timeline.getViewport());expect(zoomed.end-zoomed.start).toBeLessThan(v.end-v.start);const fraction=await page.evaluate(()=>window.lastWheelFraction);expect(Math.abs((v.start+(v.end-v.start)*fraction)-(zoomed.start+(zoomed.end-zoomed.start)*fraction))).toBeLessThan(2);
  await page.mouse.move(x,r.y+190);await page.mouse.down();await page.mouse.move(x+80,r.y+190,{steps:6});await page.mouse.up();await settle(page);expect((await page.evaluate(()=>window.timeline.getViewport())).start).toBeLessThan(zoomed.start);
 });
 test('native scrolling, collapsed lane groups and selection-preserving event focus',async({page})=>{

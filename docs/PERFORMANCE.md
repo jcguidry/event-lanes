@@ -16,7 +16,15 @@ The query is a five-minute window. Trace packages contain ten directed events; t
 
 ## Browser method
 
-The browser suite measures load, ten small pans, and ten selections at 1,000/10,000/100,000 events and 80 lanes. It times an API mutation through two requestAnimationFrame callbacks, including scheduling/model/rendering work. It does not measure GPU completion, user-perceived input latency, sustained FPS, or mobile performance. Browser JSON and screenshots are retained in GitHub Actions. Actual measured results are added after CI completion; do not substitute core timings for rendering timings.
+The browser suite measures load, ten small pans, and ten selections at 1,000/10,000/100,000 events and 80 lanes. It times an API mutation through two requestAnimationFrame callbacks, including scheduling/model/rendering work. It does not measure GPU completion, user-perceived input latency, sustained FPS, or mobile performance. Browser JSON and screenshots are retained in GitHub Actions. Initial Chromium 151 / Linux CI measurements are below. Two requestAnimationFrame callbacks impose roughly a 33 ms floor on this method; a 33 ms result is not evidence that rendering itself takes 33 ms. Ten samples make p95 effectively the slowest sample. Do not substitute core timings for these rendering measurements.
+
+| Events / 80 lanes | Load ms | Pan p50 / p95 ms | Selection p50 / p95 ms |
+|---|---|---|---|
+| 1,000 | 27.8 | 33.3 / 34.8 | 33.3 / 33.5 |
+| 10,000 | 139.2 | 34.3 / 40.0 | 33.2 / 34.2 |
+| 100,000 | 1,307.9 | 218.1 / 229.8 | 221.0 / 232.4 |
+
+This makes 100,000-event continuous interaction a poor target for the current renderer on that runner. It does not establish a universal limit: the measured fixture has two participating lanes per event, short intervals, 10-event packages and a full-range density view. The benchmark passed in the initial CI run even though that run's separate zoom test failed; these are independently recorded measurements. The full report is in `benchmark/baseline-browser.json`.
 
 ## Practical limits
 

@@ -1,0 +1,37 @@
+{
+  "measuredAt": "2026-10-02T00:24:19.784Z",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+  "method": "API mutation to two requestAnimationFrame callbacks; includes scheduling/model/rendering; not GPU completion or FPS; warm runner, 80 lanes, seeded 10-event packages.",
+  "results": [
+    {
+      "events": 1000,
+      "lanes": 80,
+      "loadMs": 27.80000000000291,
+      "panP50Ms": 33.30000000000291,
+      "panP95Ms": 34.80000000000291,
+      "selectionP50Ms": 33.30000000000291,
+      "selectionP95Ms": 33.5,
+      "samples": 10
+    },
+    {
+      "events": 10000,
+      "lanes": 80,
+      "loadMs": 139.1999999999971,
+      "panP50Ms": 34.29999999998836,
+      "panP95Ms": 40,
+      "selectionP50Ms": 33.19999999999709,
+      "selectionP95Ms": 34.19999999999709,
+      "samples": 10
+    },
+    {
+      "events": 100000,
+      "lanes": 80,
+      "loadMs": 1307.8999999999942,
+      "panP50Ms": 218.10000000000582,
+      "panP95Ms": 229.8000000000029,
+      "selectionP50Ms": 221,
+      "selectionP95Ms": 232.40000000000873,
+      "samples": 10
+    }
+  ]
+}
